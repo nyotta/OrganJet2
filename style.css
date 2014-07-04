@@ -1,0 +1,89 @@
+html, body {
+  height: 100%;
+}
+.scrollable{
+   overflow: auto;
+   /*overflow-y: scroll;
+   width: 70px; /* adjust this width depending to amount of text to display */
+   height: 60px; /* adjust height depending on number of options to display */
+   border: 1px silver solid;
+ }
+ .scrollable select{
+   border: none;
+ }
+.map-container {
+  height: 80%;
+}
+
+#map-canvas {
+  height: 100%;
+}
+#disclaimer {
+  font-size: small;
+}
+#results-table td {
+  vertical-align: top;
+  text-align: center;
+  font-size: 85%;
+}
+#results-table th {
+  background-color:#0099FF; 
+  font:bold;
+  color:#FFFFFF;
+  vertical-align: top;
+  text-align: center;
+}
+.num {
+  width: 20px;
+}
+.loc {
+  width: 500px;
+}
+.address {
+  width: 300px;
+}
+.flying {
+  width: 300px;
+}
+.driving {
+  width: 300px;
+}
+
+#results-no-dropdown p {
+	font:bold;
+	font-size: 150%;
+}
+
+#results-no-dropdown td {
+  vertical-align: top;
+  text-align: center;
+  font-size: 85%;
+}
+
+#results-no-dropdown th{
+  background-color:#0099FF; 
+  font:bold;
+  color:#FFFFFF;
+  vertical-align: top;
+  text-align: center
+}
+.num {
+  width: 20px;
+}
+.loc {
+  width: 500px;
+}
+.address {
+  width: 300px;
+}
+
+#execButton {
+  margin-bottom: 13px
+}
+#radioBubble {
+  margin-bottom: 7px;
+  margin-left: 50px
+}
+#content{
+    height: 100px;
+}
