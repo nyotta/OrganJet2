@@ -456,19 +456,24 @@ This file is the main web application. This takes a zip code and finds the neare
 			</div>
     </div>
     <div class='row'> <!-- contains radio buttons, drop downs, buttons, etc-->
-      <div class="span6 offset3"> 
+      <div class="span10 offset2"> 
         <p>
           <form id="zipForm" name="zipForm">
 						Choose Organ: 
 						<input id="organs" name="organs" type="radio" value="Kidney" /> Kidney
-						<input id="organs" name="organs" type="radio" value="Liver" /> Liver<br>
-						Choose Type of Transplant Center (optional): 
+						<input id="organs" name="organs" type="radio" value="Liver" /> Liver
+            <p></p>
+						
+            Choose Type of Transplant Center (optional): 
 						<input id="tx" name="tx" type="radio" value="_Low" selected /> Low
 						<input id="tx" name="tx" type="radio" value="_Kid"/> Children
-						<input id="tx" name="tx" type="radio" value="_Reg"/> Regular<br>
+						<input id="tx" name="tx" type="radio" value="_Reg"/> Regular
+            
+            <p></p>
 						Enter Your Zip Code: 
 						<input id="zip" name="zip" type="text" maxlength="5"/><br>
-
+            
+            <p></p>
 						Choose Up to 3 Transaction Centers:<br>
 						<select id="tx1" name="tx1" size=1></select><br>
 						<select id="tx2" name="tx2" size=1></select><br>
