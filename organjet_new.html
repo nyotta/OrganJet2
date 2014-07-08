@@ -23,8 +23,8 @@ This file is the main web application. This takes a zip code and finds the neare
 
     <script>
     // declare global variables
-    var oList = new Array()
-        ,zip_obj = new Object()
+    var oList = []
+        ,zip_obj = {}
         ,bounds = new google.maps.LatLngBounds()
         ,markersArray = []
         ,url_srt = 'http://maps.googleapis.com/maps/api/geocode/json?address='
@@ -39,12 +39,12 @@ This file is the main web application. This takes a zip code and finds the neare
         ,selections = new Array()
 				,selections_DD = new Array()
 				,List_NoDD=[];
-    
+
     legendDiv.id = "legend";
-    
+
     var map
         ,geocoder;
-        
+
     // creates map
     function initialize() {
       var opts = {
@@ -56,7 +56,7 @@ This file is the main web application. This takes a zip code and finds the neare
       geocoder = new google.maps.Geocoder();
       map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legendDiv);
     }
-    
+
     // returns closest 5 locations from each list and puts it into the table
     function calculateDistances(z) {
       getCoordFromZip(z);
@@ -65,11 +65,11 @@ This file is the main web application. This takes a zip code and finds the neare
         if ( zip_obj.sta != null ) { // if the zip code entered is legit
           deleteOverlays();
           addMarker(zip_obj, 'o'); // add origin marker
-          
+
           if (selections.length > 0) { // if tx's were selected from the dropdown
-            
+
             for (var j = 0; j < selections.length; j = j+2) { // find haversine distance b/w each tx and zip
-						
+
               var tmp_num = selections[j]-1;
               var tmp_tex = selections[j+1];
 
