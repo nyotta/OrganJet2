@@ -59,108 +59,106 @@ This file is the main web application. This takes a zip code and finds the neare
 
     // returns closest 5 locations from each list and puts it into the table
     function calculateDistances(z) {
-      getCoordFromZip(z);
+      getCoordFromZip(z, function(){
+          if ( zip_obj.sta != null ) { // if the zip code entered is legit
+            deleteOverlays();
+            addMarker(zip_obj, 'o'); // add origin marker
 
-      setTimeout(function () { // give getCoordFromZip() 1 second to execute
-        if ( zip_obj.sta != null ) { // if the zip code entered is legit
-          deleteOverlays();
-          addMarker(zip_obj, 'o'); // add origin marker
+            if (selections.length > 0) { // if tx's were selected from the dropdown
 
-          if (selections.length > 0) { // if tx's were selected from the dropdown
+              for (var j = 0; j < selections.length; j = j+2) { // find haversine distance b/w each tx and zip
 
-            for (var j = 0; j < selections.length; j = j+2) { // find haversine distance b/w each tx and zip
+                var tmp_num = selections[j]-1;
+                var tmp_tex = selections[j+1];
 
-              var tmp_num = selections[j]-1;
-              var tmp_tex = selections[j+1];
-
-              var tmp=new Object();
-              tmp.name= ListTotal[tmp_num].name;
-              tmp.add = ListTotal[tmp_num].add;
-              tmp.lng = ListTotal[tmp_num].lng;
-              tmp.lat = ListTotal[tmp_num].lat;
-              tmp.web = ListTotal[tmp_num].web;
-							tmp.val = ListTotal[tmp_num].value;
-							tmp.dur_txt = 0;
-							tmp.dis_txt = 0;
-              tmp.dist_num=haversine(zip_obj.lng,zip_obj.lat,ListTotal[tmp_num].lng,ListTotal[tmp_num].lat);
-							
-              oList.push(tmp);
-							
-							selections_DD.push(ListTotal[tmp_num].add); // keep addresses of tx's in a seperate array for the Google Distance Matrix query.
+                var tmp=new Object();
+                tmp.name= ListTotal[tmp_num].name;
+                tmp.add = ListTotal[tmp_num].add;
+                tmp.lng = ListTotal[tmp_num].lng;
+                tmp.lat = ListTotal[tmp_num].lat;
+                tmp.web = ListTotal[tmp_num].web;
+  							tmp.val = ListTotal[tmp_num].value;
+  							tmp.dur_txt = 0;
+  							tmp.dis_txt = 0;
+                tmp.dist_num=haversine(zip_obj.lng,zip_obj.lat,ListTotal[tmp_num].lng,ListTotal[tmp_num].lat);
+  							
+                oList.push(tmp);
+  							
+  							selections_DD.push(ListTotal[tmp_num].add); // keep addresses of tx's in a seperate array for the Google Distance Matrix query.
+              }
+  						//console.log(selections_DD);
+  						
+  						// create table header
+  						$('#results-table thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Actual Driving Distance</th><th class='d_time'>Actual Driving Time</th><th class='f_time'>Estimated Flying Time</th></tr>");
+  						
+  						// get driving distances for each of the selected tx's
+  						calculate_DD(zip_obj.name,selections_DD);
+  			
+            } else { // if tx's were NOT selected from the drop-down
+  					
+  						console.log(organ);
+  						console.log(type);
+  						if (organ == "Liver" && type == undefined) {
+  							List_NoDD = ListLowLiver.concat(ListKidLiver,ListAllLiver);
+  						} else if (organ == "Liver" && type == "_Low") {
+  							List_NoDD = ListLowLiver;
+  						} else if (organ == "Liver" && type == "_Reg") {
+  							List_NoDD = ListAllLiver;
+  						} else if (organ == "Liver" && type == "_Kid") {
+  							List_NoDD = ListKidLiver;
+  						} else if (organ == "Kidney" && type == undefined) {
+  							List_NoDD = ListLowKidney.concat(ListKidKidney,ListAllKidney);
+  						} else if (organ == "Kidney" && type == "_Low") {
+  							List_NoDD = ListLowKidney;
+  						} else if (organ == "Kidney" && type == "_Reg") {
+  							List_NoDD = ListAllKidney;
+  						} else if (organ == "Kidney" && type == "_Kid") {
+  							List_NoDD = ListKidKidney;
+  						}
+  						//console.log(List_NoDD);
+  						
+  						for (var j = 0; j < List_NoDD.length; j++) { // find haversine distance b/w each tx and zip
+  							var tmp=new Object();
+  							tmp.name= List_NoDD[j].name;
+  							tmp.add = List_NoDD[j].add;
+  							tmp.lng = List_NoDD[j].lng;
+  							tmp.lat = List_NoDD[j].lat;
+  							tmp.web = List_NoDD[j].web;
+  							tmp.val = List_NoDD[j].value;
+  							tmp.dur_txt = 0;
+  							tmp.dis_txt = 0;
+  							tmp.dist_num=haversine(zip_obj.lng,zip_obj.lat,List_NoDD[j].lng,List_NoDD[j].lat);
+  							oList.push(tmp);
+  						}
+  						
+  						// sort list in ascending order based on haversine distance.
+  						oList.sort(function(a,b) { return parseFloat(a.dist_num) - parseFloat(b.dist_num) } );
+  						
+  						for (var j = 0 ; j < Math.min(25,List_NoDD.length) ; j++) {
+  							selections_DD.push(oList[j].add);
+  						}
+  						
+  						// create table headers
+  						$('#driving-header').append("Transplant Centers Accessible by Car");
+  						$('#results-table-d thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Actual Driving Distance</th><th class='d_time'>Actual Driving Time</th></tr>");
+  						
+  						$('#flying-header').append("Transplant Centers Accessible by Private Jet");
+  						$('#results-table-f thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Flying Distance</th><th class='d_time'>Estimated Flying Time</th><th class='d_cost'>Estimated Flying Cost</th></tr>");
+  						
+  						// get driving distances for each of the selected tx's
+  						calculate_DD(zip_obj.name,selections_DD);
             }
-						//console.log(selections_DD);
-						
-						// create table header
-						$('#results-table thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Actual Driving Distance</th><th class='d_time'>Actual Driving Time</th><th class='f_time'>Estimated Flying Time</th></tr>");
-						
-						// get driving distances for each of the selected tx's
-						calculate_DD(zip_obj.name,selections_DD);
-			
-          } else { // if tx's were NOT selected from the drop-down
-					
-						console.log(organ);
-						console.log(type);
-						if (organ == "Liver" && type == undefined) {
-							List_NoDD = ListLowLiver.concat(ListKidLiver,ListAllLiver);
-						} else if (organ == "Liver" && type == "_Low") {
-							List_NoDD = ListLowLiver;
-						} else if (organ == "Liver" && type == "_Reg") {
-							List_NoDD = ListAllLiver;
-						} else if (organ == "Liver" && type == "_Kid") {
-							List_NoDD = ListKidLiver;
-						} else if (organ == "Kidney" && type == undefined) {
-							List_NoDD = ListLowKidney.concat(ListKidKidney,ListAllKidney);
-						} else if (organ == "Kidney" && type == "_Low") {
-							List_NoDD = ListLowKidney;
-						} else if (organ == "Kidney" && type == "_Reg") {
-							List_NoDD = ListAllKidney;
-						} else if (organ == "Kidney" && type == "_Kid") {
-							List_NoDD = ListKidKidney;
-						}
-						//console.log(List_NoDD);
-						
-						for (var j = 0; j < List_NoDD.length; j++) { // find haversine distance b/w each tx and zip
-							var tmp=new Object();
-							tmp.name= List_NoDD[j].name;
-							tmp.add = List_NoDD[j].add;
-							tmp.lng = List_NoDD[j].lng;
-							tmp.lat = List_NoDD[j].lat;
-							tmp.web = List_NoDD[j].web;
-							tmp.val = List_NoDD[j].value;
-							tmp.dur_txt = 0;
-							tmp.dis_txt = 0;
-							tmp.dist_num=haversine(zip_obj.lng,zip_obj.lat,List_NoDD[j].lng,List_NoDD[j].lat);
-							oList.push(tmp);
-						}
-						
-						// sort list in ascending order based on haversine distance.
-						oList.sort(function(a,b) { return parseFloat(a.dist_num) - parseFloat(b.dist_num) } );
-						
-						for (var j = 0 ; j < Math.min(25,List_NoDD.length) ; j++) {
-							selections_DD.push(oList[j].add);
-						}
-						
-						// create table headers
-						$('#driving-header').append("Transplant Centers Accessible by Car");
-						$('#results-table-d thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Actual Driving Distance</th><th class='d_time'>Actual Driving Time</th></tr>");
-						
-						$('#flying-header').append("Transplant Centers Accessible by Private Jet");
-						$('#results-table-f thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Flying Distance</th><th class='d_time'>Estimated Flying Time</th><th class='d_cost'>Estimated Flying Cost</th></tr>");
-						
-						// get driving distances for each of the selected tx's
-						calculate_DD(zip_obj.name,selections_DD);
+  					
+  					setTimeout(function () { map.fitBounds(bounds) } ,1000); //zoom based on the LatLngBounds object
+  					
+  					description();
+  					legend();
+  					
+  					addCircle(2.5);
+  					addCircle(2);
+  					addCircle(1);
           }
-					
-					setTimeout(function () { map.fitBounds(bounds) } ,1000); //zoom based on the LatLngBounds object
-					
-					description();
-					legend();
-					
-					addCircle(2.5);
-					addCircle(2);
-					addCircle(1);
-        }
-      },1000);
+      });
     }
     
 		// function used to send request to Google's Distance Matrix Service.
@@ -414,10 +412,10 @@ This file is the main web application. This takes a zip code and finds the neare
         '<p><img src="' + destIconR + '" />' + '  Regular Center</p>' +
         '<p><img src="' + destIconC + '" />' + '  Childrens Center</p>';
     }
-    
+
     // Returns the longitude and latitude from a zip code
     // Also contains some validation
-    function getCoordFromZip(z) {
+    function getCoordFromZip(z, afterResultParsing) {
       geocoder.geocode( { 'address': z}, function(results, status) {
         if (status != "OK") { // make sure zip code is valid
           zip_obj.name=null;
@@ -440,6 +438,7 @@ This file is the main web application. This takes a zip code and finds the neare
           zip_obj.lat=results[0].geometry.location.lat();
           zip_obj.sta=status;
         }
+        afterResultParsing();
       });
     }
     
