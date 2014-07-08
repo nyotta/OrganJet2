@@ -202,7 +202,6 @@ This file is the main web application. This takes a zip code and finds the neare
 						
 							$('#results-table tbody').append("<tr><td>" + parseInt(j+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td><td>" + parseHours(oList[j].dist_num/370) + "</td></tr>");
 							
-							//parseFloat(oList[j].dist_num/370).toFixed(1)
 							addMarker(oList[j], oList[j].val.slice(-4));
 							
 						} else if (selections.length == 0) { // if tx's were NOT selected from the drop down
@@ -450,7 +449,7 @@ This file is the main web application. This takes a zip code and finds the neare
   </head>
   
   <body>
-    <h3 class="offset1">How Far is a Transpant Center From My House?</h3>
+    <h3 class="offset2">How Far is a Transpant Center From My House?</h3>
     <div class='row map-container'>
       <div class="span10 offset1" id="map-canvas">
 			</div>
@@ -462,9 +461,9 @@ This file is the main web application. This takes a zip code and finds the neare
 						Choose Organ: 
 						<input id="organs" name="organs" type="radio" value="Kidney" /> Kidney
 						<input id="organs" name="organs" type="radio" value="Liver" /> Liver
+            
             <p></p>
-						
-            Choose Type of Transplant Center (optional): 
+						Choose Type of Transplant Center <small>(optional)</small>: 
 						<input id="tx" name="tx" type="radio" value="_Low" selected /> Low
 						<input id="tx" name="tx" type="radio" value="_Kid"/> Children
 						<input id="tx" name="tx" type="radio" value="_Reg"/> Regular
@@ -474,7 +473,8 @@ This file is the main web application. This takes a zip code and finds the neare
 						<input id="zip" name="zip" type="text" maxlength="5"/><br>
             
             <p></p>
-						Choose Up to 3 Transaction Centers:<br>
+						Choose Up to 3 Transaction Centers <small>(optional)</small>:<br>
+            <small>If transplant centers are not specified, all relevant transplant centers will be considered</small><br>
 						<select id="tx1" name="tx1" size=1></select><br>
 						<select id="tx2" name="tx2" size=1></select><br>
 						<select id="tx3" name="tx3" size=1></select><br>
@@ -483,23 +483,25 @@ This file is the main web application. This takes a zip code and finds the neare
         </p>
       </div>
     </div>
+    
     <div class='row'> <!-- contains table div's-->
-		
       <div class="span10 offset1">
         <table id="results-table" class='table table-striped table-bordered table-hover table-condensed'>
           <thead></thead>
           <tbody></tbody>
         </table>
       </div>
-
+    </div>
+    
+    <div class='row'> <!-- contains table div's-->  
       <div class="span10 offset1" id="results-no-dropdown">
 				<p id="driving-header" ></p>
         <table id="results-table-d" class='table table-striped table-bordered table-hover table-condensed'>
           <thead></thead>
           <tbody></tbody>
         </table>
-				<br>
-				<p id="flying-header" ></p>
+				
+				<p id="flying-header"></p>
         <table id="results-table-f" class='table table-striped table-bordered table-hover table-condensed'>
           <thead></thead>
           <tbody></tbody>
@@ -514,7 +516,7 @@ This file is the main web application. This takes a zip code and finds the neare
       </div>
     </div>
     
-    <script>
+    <script> // these functions deal w/ the data validation in the form AND making the drop-down lists dynamic w/ the radio buttons
       
       function validateZipInput(z) { // data validation for zip codes
         if (z.length < 5) {
