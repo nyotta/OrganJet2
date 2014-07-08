@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <!--
-Bobby Nyotta - June 2013 - OrganJet
-This file is the main web application. This takes a zip code and finds the nearest kidney OR liver transplant centers.
+Bobby Nyotta - 2013-2014 - OrganJet
 -->
 <html>
   <head>
@@ -86,7 +85,7 @@ This file is the main web application. This takes a zip code and finds the neare
   							
   							selections_DD.push(ListTotal[tmp_num].add); // keep addresses of tx's in a seperate array for the Google Distance Matrix query.
               }
-  						//console.log(selections_DD);
+  						console.log(selections_DD);
   						
   						// create table header
               $('#results-table').show();
@@ -97,8 +96,8 @@ This file is the main web application. This takes a zip code and finds the neare
   			
             } else { // if tx's were NOT selected from the drop-down
   					
-  						console.log(organ);
-  						console.log(type);
+  						//console.log(organ);
+  						//console.log(type);
   						if (organ == "Liver" && type == undefined) {
   							List_NoDD = ListLowLiver.concat(ListKidLiver,ListAllLiver);
   						} else if (organ == "Liver" && type == "_Low") {
@@ -146,7 +145,7 @@ This file is the main web application. This takes a zip code and finds the neare
   						
   						$('#flying-header').append("Transplant Centers Accessible by Private Jet");
               $('#results-table-f').show();
-  						$('#results-table-f thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Flying Distance</th><th class='d_time'>Estimated Flying Time</th><th class='d_cost'>Estimated Flying Cost</th></tr>");
+  						$('#results-table-f thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Estimated Flying Distance</th><th class='d_time'>Estimated Flying Time</th></tr>"); //<th class='d_cost'>Estimated Flying Cost</th></tr>");
   						
   						// get driving distances for each of the selected tx's
   						calculate_DD(zip_obj.name,selections_DD);
@@ -180,9 +179,7 @@ This file is the main web application. This takes a zip code and finds the neare
 
 		// callback function after request to Google's Distance Matrix service is returned.
     function callback(response, status) { 
-		
-	  //console.log(response);
-
+      
       if (status != google.maps.DistanceMatrixStatus.OK) {
         alert('Error was: ' + status);
       } else {
@@ -191,7 +188,8 @@ This file is the main web application. This takes a zip code and finds the neare
 				
           var results = response.rows[i].elements;
 					var count_flying = 0;
-					
+          var count_driving = 0;
+
 					for (var j = 0 ; j < results.length ; j++) {
 						//console.log(j);
 						//console.log(results[j].duration);
@@ -215,8 +213,10 @@ This file is the main web application. This takes a zip code and finds the neare
 							}
 							
 							if (range > 0) {
-								$('#results-table-d tbody').append("<tr><td>" + parseInt(j+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td></tr>");
+								$('#results-table-d tbody').append("<tr><td>" + parseInt(count_driving+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td></tr>");
 								
+                count_driving++;
+                
 								addMarker(oList[j], oList[j].val.slice(-4));
 							}
 							
@@ -228,7 +228,7 @@ This file is the main web application. This takes a zip code and finds the neare
 							}
 							
 							if (cost > 0) {
-								$('#results-table-f tbody').append("<tr><td>" + parseInt(count_flying+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + parseInt(oList[j].dist_num) + " mi</td><td>" + parseHours(oList[j].dist_num/370) + " </td><td>$" + numberWithCommas(cost) + " </td></tr>");
+								$('#results-table-f tbody').append("<tr><td>" + parseInt(count_flying+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + parseInt(oList[j].dist_num) + " mi</td><td>" + parseHours(oList[j].dist_num/370) + " </td></tr>"); //<td>$" + numberWithCommas(cost) + " </td></tr>");
 								
 								count_flying++;
 								
@@ -246,12 +246,10 @@ This file is the main web application. This takes a zip code and finds the neare
 									} else if (oList[k].dist_num > 2*370 && oList[k].dist_num <= 2.5*370) { cost = 22500;
 									}
 									if (cost > 0) {
-										$('#results-table-f tbody').append("<tr><td>" + parseInt(count_flying+1) + "</td><td><a href=" + oList[k].web + " target='_blank'>" + oList[k].name + "</a></td><td>" + oList[k].add + "</td><td>" + parseInt(oList[k].dist_num) + " mi</td><td>" + parseHours(oList[k].dist_num/370) + "</td><td>$" + numberWithCommas(cost) + " </td></tr>");
-										
-										// parseFloat(oList[k].dist_num/370).toFixed(1)
+										$('#results-table-f tbody').append("<tr><td>" + parseInt(count_flying+1) + "</td><td><a href=" + oList[k].web + " target='_blank'>" + oList[k].name + "</a></td><td>" + oList[k].add + "</td><td>" + parseInt(oList[k].dist_num) + " mi</td><td>" + parseHours(oList[k].dist_num/370) + "</td></tr>"); //<td>$" + numberWithCommas(cost) + " </td></tr>");
 										
 										count_flying++;
-										console.log(count_flying);
+										//console.log(count_flying);
 										addMarker(oList[k], oList[k].val.slice(-4));
 									}
 								}
@@ -326,12 +324,15 @@ This file is the main web application. This takes a zip code and finds the neare
       oList = new Array();
 
       bounds = new google.maps.LatLngBounds();
+      $('#results-table').hide();
       $('#results-table thead').empty();
       $('#results-table tbody').empty();
 			$('#flying-header').empty();
 			$('#driving-header').empty();
+      $('#results-table-d').hide();
       $('#results-table-d thead').empty();
       $('#results-table-d tbody').empty();
+      $('#results-table-f').hide();
       $('#results-table-f thead').empty();
       $('#results-table-f tbody').empty();
       $('#description').empty();
@@ -378,22 +379,25 @@ This file is the main web application. This takes a zip code and finds the neare
     // All of the text that comes below the results table is in here. This is not dynamic at all.
     function description() {
       var descrip = $('#description');
-      descrip.append("<p>We have provided the five closest transplant locations with lowest median wait times along with five closest regular and children's transplant centers:</p>");
+      
+      descrip.append("<p>Pin Colors Legend:</p>");
       descrip.append("<ul><li>Yellow Pin - Location of Your Zip Code</li><li>Green Pin - Locations of the closest low wait time transplant centers</li><li>Blue Pin - Locations of the closest regular transplant centers</li><li>Orange Pin - Locations of the closest children's transplant centers</li></ul>");
+      descrip.append("<p>The “pick up” time for a private jet from an airport near your home is typically about three to four hours. Thus, the total time to reach your transplant center is the estimated flying time plus the pick up time plus the driving time from the drop off airport to the transplant center.</p>");
+      
       descrip.append("<p>Information about 'Low Wait Time' centers:</p>");
       descrip.append("<ul><li>Transplant centers whose median wait times are well below (40% or more) the national median are called 'low wait time' centers. This median is computed based on data across various blood types. Please note that actual times for a patient can be significantly different (lower or higher) from median times.</li>" +
-      "<li>No distinction is made between centers that have median wait time of 19 months versus those that have 23 months. All centers listed in the 'low wait' column have median times lower than 26 months when the last SRTR report came out.</li>" +
-      "<li>If a center in the low wait time category (Column 1) is also within 5 closest centers from an input ZIP code, then the column (Column 2) that has 'closest (regular) centers' will have the 6th closest one in that column (and so on). That is, the list on column 1 is mutually exclusive from list in column 2.</li>" +
+      "<li>Note that (for example) no distinction is made between centers that have median wait time of 19 months versus those that have 23 months. </li>" +
       "<li>We have only selected centers in 'low wait times' that also have sufficiently high volumes and have satisfactory outcomes (using Observed/Expected ratio criteria).</li></ul>");
       
-      descrip.append("The transplant center locations were obtained from <a href='http://www.srtr.org' target='_blank'>Scientific Registry of Transplant Recipients</a>.");
-      descrip.append("<br />If a geographically close transplant center is also a low wait time transplant center, it will only show up in the 'Low Wait Time' column.");
-      descrip.append("<br />VA hospitals are not included in our lists. Information about VA centers can be found <a href='http://www.va.gov/TRANSPLANT/' target='_blank'>here</a>.");
-      descrip.append("<br />The map in this application is supported by Google Maps Javascript API V3, which has strict usage limitations.");// Querying too many zip codes in a short period of time can cause the application to fail. If this happens, refresh the page.");
-      descrip.append("<br />'Distance' is computed through a heuristic formula that uses latitude and longitude information. (That is, this is not driving distance found on Google Maps, Yahoo! Maps, or MapQuest.)"); 
+      descrip.append("<p>Other Information:</p>");
+      descrip.append("<ul><li>The transplant center locations were obtained from <a href='http://www.srtr.org' target='_blank'>Scientific Registry of Transplant Recipients</a>. If a geographically close transplant center is also a low wait time transplant center, it will only show up in the 'Low Wait Time' column.</li>" + 
+      "<li>VA hospitals are not included in our lists. Information about VA centers can be found <a href='http://www.va.gov/TRANSPLANT/' target='_blank'>here</a>.</li>" + 
+      "<li>'FlyingDistance' is computed through a heuristic formula that uses latitude and longitude information. The map in this application is supported by Google Maps Javascript API V3, which has strict usage limitations.</li></ul>"); 
       
       var disclaim = $('#disclaimer');
       disclaim.append("OrganJet and GuardianWings do not provide medical advice. All information presented here is for educational/awareness purposes only. Please consult your physician before taking any action. Every effort has been made to furnish accurate and most up to date summarized data based on publicly available information.");
+      
+      $('#post-table-text').show();
     }
 
     // adding legend to the map
@@ -461,14 +465,14 @@ This file is the main web application. This takes a zip code and finds the neare
         <p>
           <form id="zipForm" name="zipForm">
 						Choose Organ: 
-						<input id="organs" name="organs" type="radio" value="Kidney" /> Kidney
-						<input id="organs" name="organs" type="radio" value="Liver" /> Liver
+						<input id="organs_k_radio" name="organs" type="radio" value="Kidney" /> Kidney
+						<input id="organs_l_radio" name="organs" type="radio" value="Liver" /> Liver
             
             <p></p>
 						Choose Type of Transplant Center <small>(optional)</small>: 
-						<input id="tx" name="tx" type="radio" value="_Low" selected /> Low
-						<input id="tx" name="tx" type="radio" value="_Kid"/> Children
-						<input id="tx" name="tx" type="radio" value="_Reg"/> Regular
+						<input id="tx_l_radio" name="tx" type="radio" value="_Low" selected /> Low-Wait
+						<input id="tx_k_radio" name="tx" type="radio" value="_Kid"/> Children
+						<input id="tx_r_radio" name="tx" type="radio" value="_Reg"/> Regular
             
             <p></p>
 						Enter Your Zip Code: 
@@ -512,7 +516,7 @@ This file is the main web application. This takes a zip code and finds the neare
 			
     </div>
     <div class='row'>
-      <div class="span10 offset1 well">
+      <div id="post-table-text" class="hide span10 offset1 well">
         <p id="description"></p>
         <p id="disclaimer"></p>
       </div>

@@ -68,13 +68,19 @@ html, body {
   text-align: center
 }
 .num {
-  width: 20px;
+  width: 5%;
 }
 .loc {
-  width: 500px;
+  width: 35%;
 }
 .address {
-  width: 300px;
+  width: 35%;
+}
+.d_dist {
+  width: 12.5%;
+}
+.d_time {
+  width: 12.5%;
 }
 
 #execButton {
