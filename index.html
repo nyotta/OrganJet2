@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <!--
-Bobby Nyotta - June 2013 - OrganJet
-This file is the main web application. This takes a zip code and finds the nearest kidney OR liver transplant centers.
+Bobby Nyotta - 2013-2014 - OrganJet
 -->
 <html>
   <head>
@@ -9,21 +8,581 @@ This file is the main web application. This takes a zip code and finds the neare
     <link href="bootstrap.css" rel="stylesheet" type="text/css">
     <link href="bootstrap-responsive.css" rel="stylesheet" type="text/css">
     <link href="style.css" rel="stylesheet" type="text/css">
+  
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8ndKa5KGrRbe6feO4v4M2dODOw8w5_Q0&sensor=false"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <script src="retrieve-data-hardcoded.js"></script>
+    
+    <!-- Conflict b/w Bootstrap and Google Maps Info window styles problem, so this fixes it! -->
+    <style type="text/css">
+      img[src*="gstatic.com/"], img[src*="googleapis.com/"] { max-width: none; }
+    </style>
+
+    <script>
+    // declare global variables
+    var oList = []
+        ,zip_obj = {}
+        ,bounds = new google.maps.LatLngBounds()
+        ,markersArray = []
+        ,url_srt = 'http://maps.googleapis.com/maps/api/geocode/json?address='
+        ,url_end = '&sensor=false'
+        ,destIconL = 'https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=T|12f404|000000'
+        ,destIconR = 'https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=R|63D1F4|000000'
+        ,destIconC = 'https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=C|FFAA00|000000'
+        ,originIcon = 'https://chart.googleapis.com/chart?chst=d_map_spin&chld=.75|0|FFFF00|11|_|O'
+        ,organ = ""
+				,type = ""
+        ,legendDiv = document.createElement('DIV')
+        ,selections = []
+				,selections_DD = []
+				,List_NoDD=[];
+
+    legendDiv.id = "legend";
+
+    var map
+        ,geocoder;
+
+    // creates map
+    function initialize() {
+      var opts = {
+        center: new google.maps.LatLng(39.8282, -98.5795), //center of america
+        zoom: 4,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+      };
+      map = new google.maps.Map(document.getElementById('map-canvas'), opts);
+      geocoder = new google.maps.Geocoder();
+      map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legendDiv);
+    }
+
+    // The bulk of the app -- most of the pre-processing is done here.
+    function calculateDistances(z) {
+      getCoordFromZip(z, function(){
+          if ( zip_obj.sta != null ) { // if the zip code entered is legit
+            deleteOverlays();
+            addMarker(zip_obj, 'o'); // add origin marker
+
+            if (selections.length > 0) { // if tx's were selected from the dropdown
+
+              for (var j = 0; j < selections.length; j = j+2) { // find haversine distance b/w each tx and zip
+
+                var tmp_num = selections[j]-1;
+                var tmp_tex = selections[j+1];
+
+                var tmp=new Object();
+                tmp.name= ListTotal[tmp_num].name;
+                tmp.add = ListTotal[tmp_num].add;
+                tmp.lng = ListTotal[tmp_num].lng;
+                tmp.lat = ListTotal[tmp_num].lat;
+                tmp.web = ListTotal[tmp_num].web;
+  							tmp.val = ListTotal[tmp_num].value;
+  							tmp.dur_txt = 0;
+  							tmp.dis_txt = 0;
+                tmp.dist_num=haversine(zip_obj.lng,zip_obj.lat,ListTotal[tmp_num].lng,ListTotal[tmp_num].lat);
+  							
+                oList.push(tmp);
+  							
+  							selections_DD.push(ListTotal[tmp_num].add); // keep addresses of tx's in a seperate array for the Google Distance Matrix query.
+              }
+  						console.log(selections_DD);
+  						
+  						// create table header
+              $('#results-table').show();
+  						$('#results-table thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Actual Driving Distance</th><th class='d_time'>Actual Driving Time</th><th class='f_time'>Estimated Flying Time</th></tr>");
+  						
+  						// get driving distances for each of the selected tx's
+  						calculate_DD(zip_obj.name,selections_DD);
+  			
+            } else { // if tx's were NOT selected from the drop-down
+  					
+  						console.log(organ);
+  						console.log(type);
+  						if (organ == "Liver" && type == undefined) {
+  							List_NoDD = ListLowLiver.concat(ListKidLiver,ListAllLiver);
+  						} else if (organ == "Liver" && type == "_Low") {
+  							List_NoDD = ListLowLiver;
+  						} else if (organ == "Liver" && type == "_Reg") {
+  							List_NoDD = ListAllLiver;
+  						} else if (organ == "Liver" && type == "_Kid") {
+  							List_NoDD = ListKidLiver;
+  						} else if (organ == "Kidney" && type == undefined) {
+  							List_NoDD = ListLowKidney.concat(ListKidKidney,ListAllKidney);
+  						} else if (organ == "Kidney" && type == "_Low") {
+  							List_NoDD = ListLowKidney;
+  						} else if (organ == "Kidney" && type == "_Reg") {
+  							List_NoDD = ListAllKidney;
+  						} else if (organ == "Kidney" && type == "_Kid") {
+  							List_NoDD = ListKidKidney;
+  						}
+              List_NoDD = ListTotal;
+  						console.log(List_NoDD);
+  						
+  						for (var j = 0; j < List_NoDD.length; j++) { // find haversine distance b/w each tx and zip
+  							var tmp=new Object();
+  							tmp.name= List_NoDD[j].name;
+  							tmp.add = List_NoDD[j].add;
+  							tmp.lng = List_NoDD[j].lng;
+  							tmp.lat = List_NoDD[j].lat;
+  							tmp.web = List_NoDD[j].web;
+  							tmp.val = List_NoDD[j].value;
+  							tmp.dur_txt = 0;
+  							tmp.dis_txt = 0;
+  							tmp.dist_num=haversine(zip_obj.lng,zip_obj.lat,List_NoDD[j].lng,List_NoDD[j].lat);
+  							oList.push(tmp);
+  						}
+  						
+  						// sort list in ascending order based on haversine distance.
+  						oList.sort(function(a,b) { return parseFloat(a.dist_num) - parseFloat(b.dist_num) } );
+  						console.log(oList);
+  						for (var j = 0 ; j < Math.min(25,List_NoDD.length) ; j++) {
+  							selections_DD.push(oList[j].add);
+  						}
+  						
+  						// create table headers
+  						$('#driving-header').append("Transplant Centers Accessible by Car");
+              $('#results-table-d').show();
+  						$('#results-table-d thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Actual Driving Distance</th><th class='d_time'>Actual Driving Time</th></tr>");
+  						
+  						$('#flying-header').append("Transplant Centers Accessible by Private Jet");
+              $('#results-table-f').show();
+  						$('#results-table-f thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Estimated Flying Distance</th><th class='d_time'>Estimated Flying Time</th></tr>"); //<th class='d_cost'>Estimated Flying Cost</th></tr>");
+  						
+  						// get driving distances for each of the selected tx's
+  						calculate_DD(zip_obj.name,selections_DD);
+            }
+  					
+  					setTimeout(function () { map.fitBounds(bounds) } ,1000); //zoom based on the LatLngBounds object
+  					
+  					description();
+  					legend();
+  					
+  					addCircle(3);
+  					addCircle(2);
+  					addCircle(1);
+          }
+      });
+    }
+    
+		// function used to send request to Google's Distance Matrix Service.
+		function calculate_DD(orig,dest) {
+
+			var service = new google.maps.DistanceMatrixService();
+			service.getDistanceMatrix({
+				origins: [orig],
+				destinations: dest,
+				travelMode: google.maps.TravelMode.DRIVING,
+				unitSystem: google.maps.UnitSystem.IMPERIAL,
+				avoidHighways: false,
+				avoidTolls: false,
+			}, callback);
+		}
+
+		// callback function after request to Google's Distance Matrix service is returned... the mark-up is built in here.
+    function callback(response, status) { 
+      
+      if (status != google.maps.DistanceMatrixStatus.OK) {
+        alert('Error was: ' + status);
+      } else {
+				
+        for (var i = 0 ; i < response.originAddresses.length ; i++) {
+				
+          var results = response.rows[i].elements;
+					var count_flying = 0;
+          var count_driving = 0;
+
+					for (var j = 0 ; j < results.length ; j++) {
+						//console.log(j);
+						//console.log(results[j].duration);
+						
+						oList[j].dur_txt = results[j].duration.text;
+						oList[j].dis_txt = results[j].distance.text;
+
+						if (selections.length > 0) { // if tx's were selected from the drop down
+						
+							$('#results-table tbody').append("<tr><td>" + parseInt(j+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td><td>" + parseHours(oList[j].dist_num/370) + "</td></tr>");
+							
+							addMarker(oList[j], '_Low');
+							
+						} else if (selections.length == 0) { // if tx's were NOT selected from the drop down
+							
+							// see if tx is <= 3 hours away (driving), add to table and marker to map
+							var range = 0;
+							if (results[j].duration.value <= 60*60) { range = 1;
+							} else if (results[j].duration.value > 60*60*1 && results[j].duration.value <= 60*60*2) { range = 2;
+							} else if (results[j].duration.value > 60*60*2 && results[j].duration.value <= 60*60*3) { range = 3;
+							}
+							
+							if (range > 0) {
+								$('#results-table-d tbody').append("<tr><td>" + parseInt(count_driving+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td></tr>");
+								
+                count_driving++;
+                
+								addMarker(oList[j], '_Low');
+							}
+							
+							// then see if tx is >3 hrs away (driving) and <= 2.5*370 miles flying, add to table and marker to map
+							var cost = 0;
+							if (range == 0 && oList[j].dist_num <= 370) { cost = 8000;
+							} else if (range == 0 && oList[j].dist_num > 370 && oList[j].dist_num <= 2*370) { cost = 17000;
+							} else if (range == 0 && oList[j].dist_num > 2*370 && oList[j].dist_num <= 3*370) { cost = 22500;
+							}
+							
+							if (cost > 0) {
+								$('#results-table-f tbody').append("<tr><td>" + parseInt(count_flying+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + parseInt(oList[j].dist_num) + " mi</td><td>" + parseHours(oList[j].dist_num/370) + " </td></tr>"); //<td>$" + numberWithCommas(cost) + " </td></tr>");
+								
+								count_flying++;
+								
+								addMarker(oList[j], '_Low');
+							}
+							
+							// finally, at the end of the google distance locations, we look at other locations if we haven't hit 25 in the flying table. we go through the rest of the relevant tx's to see if they are within private jet distance. we stop when we've exhausted the list OR hit 25 tx's.
+							if (j == results.length-1) {
+								var k = j;
+								while (k < oList.length && count_flying < 25) {
+									k++;
+									cost = 0;
+									if (oList[k].dist_num <= 370) { cost = 8000;
+									} else if (oList[k].dist_num > 370 && oList[k].dist_num <= 2*370) { cost = 17000;
+									} else if (oList[k].dist_num > 2*370 && oList[k].dist_num <= 3*370) { cost = 22500;
+									}
+									if (cost > 0) {
+										$('#results-table-f tbody').append("<tr><td>" + parseInt(count_flying+1) + "</td><td><a href=" + oList[k].web + " target='_blank'>" + oList[k].name + "</a></td><td>" + oList[k].add + "</td><td>" + parseInt(oList[k].dist_num) + " mi</td><td>" + parseHours(oList[k].dist_num/370) + "</td></tr>"); //<td>$" + numberWithCommas(cost) + " </td></tr>");
+										
+										count_flying++;
+										//console.log(count_flying);
+										addMarker(oList[k], '_Low');
+									}
+								}
+							}
+						}
+          }
+        }
+      }
+    }
+		
+		// adds a comma at the 1000's place
+		function numberWithCommas(x) {
+			return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+		}
+		
+    // adds markers to the map
+    function addMarker(obj, isDestination) {
+      var icon;
+      if (isDestination == '_Low') {        // low-wait
+        icon = destIconL;
+      } else if (isDestination == '_Reg') { // regular
+        icon = destIconR;
+      } else if (isDestination == '_Kid') { // children's center
+        icon = destIconC;
+      } else {                           // zip code
+        icon = originIcon;
+      }
+      // add markers using lat/lng
+      var marker = new google.maps.Marker({
+        map: map,
+        position: new google.maps.LatLng(obj.lat, obj.lng), 
+        icon: icon,
+        title: obj.name
+      });
+      
+      // add pop-up window to markers that works on click
+      marker.infowindow = new google.maps.InfoWindow({
+        content: "<div id='content'><style='font-size:12px;>" + "<a href='" + obj.web + "' target='_blank' >" + obj.name + "</a><br>" + obj.add + "</></div>"
+        ,maxWidth: 0
+      });
+      google.maps.event.addListener(marker, 'click', function() {
+        marker.infowindow.open(map, marker);
+      });
+      
+      markersArray.push(marker); // add marker to array
+      bounds.extend(new google.maps.LatLng(obj.lat, obj.lng)); // add marker location to bounds object (for zoom)
+    }
+    
+    // adds circles to the map
+    function addCircle(hours) {
+			var color = '#FF0000';
+			if (Math.ceil(hours) == 1) {color = '#00FF00'}
+			else if (Math.ceil(hours) == 2) {color = '#FFFF00'}
+			else if (Math.ceil(hours) == 3) {color = '#FF0000'}
+			
+      var circle = new google.maps.Circle({
+				strokeColor: color,
+				strokeOpacity: 0.15,
+				strokeWeight: 2,
+				fillColor: color,
+				fillOpacity: 0.15,
+				map: map,
+				center: new google.maps.LatLng(zip_obj.lat, zip_obj.lng), 
+				radius: hours*595457
+      });
+			
+      markersArray.push(circle); // add circle to array
+    }
+		
+    // clears map of pins; clears table and text
+    function deleteOverlays() {
+      oList = new Array();
+
+      bounds = new google.maps.LatLngBounds();
+      $('#results-table').hide();
+      $('#results-table thead').empty();
+      $('#results-table tbody').empty();
+			$('#flying-header').empty();
+			$('#driving-header').empty();
+      $('#results-table-d').hide();
+      $('#results-table-d thead').empty();
+      $('#results-table-d tbody').empty();
+      $('#results-table-f').hide();
+      $('#results-table-f thead').empty();
+      $('#results-table-f tbody').empty();
+      $('#description').empty();
+      $('#disclaimer').empty();
+      $('#legend').empty();
+      
+      for (var i = 0; i < markersArray.length; i++) {
+        markersArray[i].setMap(null);
+      }
+      markersArray = [];
+    }
+    
+    // Computes the Haversince distance between two points
+    function haversine(lon1, lat1, lon2, lat2) {
+      var R = 3958.7558657440545 // miles
+        ,dLat = toRad(lat2-lat1)
+        ,dLon = toRad(lon2-lon1)
+        ,lat1 = toRad(lat1)
+        ,lat2 = toRad(lat2);
+ 
+      var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+      return R * c;
+    }
+    
+    // Converts numeric degrees to radians
+    function toRad(Value) {
+      return Value * Math.PI / 180;
+    }
+		
+		// takes hours and converts it into a string that reads "X hours Y minutes"
+		function parseHours(totalHours) {
+			totalMin = totalHours * 60 + 12; // must add 12 minutes, per Sridhar's request.
+			hrs = Math.floor(totalMin / 60);
+			min = (totalMin % 60);// + 12; 
+      
+			if (hrs == 0)  {
+				return parseInt(min) + " mins";
+			} else {
+				return parseInt(hrs) + " hours " + parseInt(min) + " mins";
+			}
+		}
+		
+    // All of the text that comes below the results table is in here. This is not dynamic at all.
+    function description() {
+      var descrip = $('#description');
+      
+      descrip.append("<p>Pin Colors Legend:</p>");
+      descrip.append("<ul><li>Yellow Pin - Location of Your Zip Code</li><li>Green Pin - Locations of your chosen transplant centers</li></ul>");
+      
+      descrip.append("<p>The concentric circles show areas that are approximately one, two and three hour flying times from your home ZIP code.</p>");
+      descrip.append("<p>The transplant center locations were obtained from <a href='http://www.srtr.org' target='_blank'>Scientific Registry of Transplant Recipients</a>.</p>");
+      descrip.append("<p>'Estimated Flying Time' is computed through a heuristic formula that uses latitude and longitude information and average flight speeds of a light jet. The map in this application is supported by Google Maps Javascript API V3, which has strict usage limitations.</p>"); 
+      descrip.append("<p>The 'pick up' time for a private jet from an airport near your home is typically about three to four hours. Thus, the <i>total time</i> to reach your transplant center is the estimated flying time <i>plus</i> the pick up time <i>plus</i> the driving time from the drop off airport to the transplant center.</p>");
+      
+      var disclaim = $('#disclaimer');
+      disclaim.append("OrganJet and GuardianWings do not provide medical advice. All information presented here is for educational/awareness purposes only. Please consult your physician before taking any action. Every effort has been made to furnish accurate and most up to date summarized data based on publicly available information.");
+      
+      $('#post-table-text').show();
+    }
+
+    // adding legend to the map
+    function legend() {
+      // Set CSS for the control border
+      legendDiv.style.padding = '5px';
+      legendDiv.style.backgroundColor = 'white';
+      legendDiv.style.opacity = '0.75';
+      legendDiv.style.borderStyle = 'solid';
+      legendDiv.style.borderWidth = '1px';
+      
+      // Set CSS for the control text
+      legendDiv.style.fontFamily = 'Arial,sans-serif';
+      legendDiv.style.fontSize = '12px';
+      
+      // Add the text
+      legendDiv.innerHTML = '<p style="text-align:center;line-height:50%"><b>LEGEND</b></p>' +
+        '<p><img src="' + originIcon + '" />' + '  Your Location</p>' + 
+        '<p><img src="' + destIconL + '" />' + '  Transplant Center</p>'; 
+        // + '<p><img src="' + destIconR + '" />' + '  Regular Center</p>' 
+        // + '<p><img src="' + destIconC + '" />' + '  Childrens Center</p>';
+    }
+
+    // Returns the longitude and latitude from a zip code
+    // Also contains some validation
+    function getCoordFromZip(z, afterResultParsing) {
+      geocoder.geocode( { 'address': z}, function(results, status) {
+        if (status != "OK") { // make sure zip code is valid
+          zip_obj.name=null;
+          zip_obj.add=null;
+          zip_obj.lng=null;
+          zip_obj.lat=null;
+          zip_obj.sta=null;
+          alert("The Zip Code Entered Is Unknown. Try The Zip Code Again Or Try A Different Zip Code.");
+        } else if (results[0].formatted_address.search("USA") === -1) { // make sure zip code is in the USA
+          zip_obj.name=null;
+          zip_obj.add=null;
+          zip_obj.lng=null;
+          zip_obj.lat=null;
+          zip_obj.sta=null;
+          alert("The Zip Code Entered Is Not in the USA. Try A Different Zip Code.");
+        } else {
+          zip_obj.name=z;
+          zip_obj.add=results[0].formatted_address;;
+          zip_obj.lng=results[0].geometry.location.lng();
+          zip_obj.lat=results[0].geometry.location.lat();
+          zip_obj.sta=status;
+        }
+        afterResultParsing();
+      });
+    }
+    
+    google.maps.event.addDomListener(window, 'load', initialize);
+    
+    </script>
   </head>
   
   <body>
-    <h1 class="span8 offset4">Organ Jet Tools</h1>
-    <div class="row">
-      <p class="span10 offset2">OrganJet has provided two tools to individuals looking to multiple list on kidney and liver waitlists.
-      <br>The first tool provides the near transplant centers to your zip code.
-      <br>The second tool provides the driving and flying times to transplant centers close to your zip code.<p>
+    <h3 class="offset2">Driving and Flying Times to Transplant Centers</h3>
+    <div class='row map-container'>
+      <div class="span10 offset1" id="map-canvas">
+			</div>
     </div>
-    <div class="row">
-      <h2 class="span11 offset1">Tool 1: <a href="organjet_orig.html" target="_blank">Locate a Transpant Center With a Low Wait Time</a></h2>
-    </div>  
-    <div class="row">
-      <h2 class="span11 offset1">Tool 2: <a href="organjet_new.html" target="_blank">How Far is a Transpant Center From My House?</a></h2>
-    </div>  
+    <div class='row'> <!-- contains radio buttons, drop downs, buttons, etc-->
+      <div class="span10 offset2"> 
+        <p>
+          <form id="zipForm" name="zipForm">
+						<p></p>
+            Enter Your Zip Code: 
+						<input id="zip" name="zip" type="text" maxlength="5"/><br>
+            
+            <p></p>
+						Choose Up to 3 Transaction Centers:<br>
+            <small>If transplant centers are not specified, all relevant transplant centers will be considered</small><br>
+						<select id="tx1" name="tx1" size=1 style="width: 250px;"></select><br>
+						<select id="tx2" name="tx2" size=1 style="width: 250px;"></select><br>
+						<select id="tx3" name="tx3" size=1 style="width: 250px;"></select><br>
+            <input id="execButton" name="buttonExecute" type="button" value="Find" class='btn' /><br>
+          </form> 
+        </p>
+      </div>
+    </div>
+    
+    <div class='row'> <!-- contains table div's-->
+      <div class="span10 offset1">
+        <table id="results-table" class='hide table table-striped table-bordered table-hover table-condensed'>
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div class='row'> <!-- contains table div's-->  
+      <div class="span10 offset1" id="results-no-dropdown">
+				<p id="driving-header" ></p>
+        <table id="results-table-d" class='hide table table-striped table-bordered table-hover table-condensed'>
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+				
+				<p id="flying-header"></p>
+        <table id="results-table-f" class='hide table table-striped table-bordered table-hover table-condensed'>
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+			
+    </div>
+    <div class='row'>
+      <div id="post-table-text" class="hide span10 offset1 well">
+        <p id="description"></p>
+        <p id="disclaimer"></p>
+      </div>
+    </div>
+    
+    <script> // these functions deal w/ the data validation in the form AND making the drop-down lists dynamic w/ the radio buttons
+      
+      function validateZipInput(z) { // data validation for zip codes
+        if (z.length < 5) {
+          alert("Zip Code Must Be 5 Digits");
+          return false;
+        } else if (z.match(/^[0-9]+$/) == null) {
+          alert("Zip Code Can Only Contain Digits");
+          return false;
+        } else {
+          return true;
+        }
+      }
+      
+      $("#zipForm").submit(function() { // executes procedures when "enter" is pressed
+        selections = new Array();
+				selections_DD = new Array();
+        organ = $('input[name=organs]:checked','#zipForm').val();
+				type = $('input[name=tx]:checked','#zipForm').val();
+        var zip = $('#zip').val();
+        
+        for (var i = 1; i < 4; i++) { //retrieves the option selected from each of the dropdown menu's
+					var tmp_DD_ID 				= 'tx' + i;
+					var tmp_DD_OptionVal 	= $('#'+tmp_DD_ID+' :selected').attr('id');
+          var tmp_DD_OptionTex 	= $('#'+tmp_DD_ID+' :selected').text();
+
+          if (tmp_DD_OptionVal != 0) { // adds tx's from the dropdown to the "selections" array
+            selections.push(tmp_DD_OptionVal);
+            selections.push(tmp_DD_OptionTex);
+          }
+        }
+		
+        if (validateZipInput(zip)) {
+          calculateDistances(zip);
+        }
+        return false;
+      })
+      
+      $('#execButton').on("click", function(){ // executes procedures when the button is pressed
+        selections = new Array();
+				selections_DD = new Array();
+        organ = $('input[name=organs]:checked','#zipForm').val();
+				type = $('input[name=tx]:checked','#zipForm').val();
+        var zip = $('#zip').val();
+        
+        for (var i = 1; i < 4; i++) { //retrieves the option selected from each of the dropdown menu's
+					var tmp_DD_ID 				= 'tx' + i;
+					var tmp_DD_OptionVal 	= $('#'+tmp_DD_ID+' :selected').attr('id');
+          var tmp_DD_OptionTex 	= $('#'+tmp_DD_ID+' :selected').text();
+					
+          if (tmp_DD_OptionVal != 0) { // adds tx's from the dropdown to the "selections" array
+            selections.push(tmp_DD_OptionVal);
+            selections.push(tmp_DD_OptionTex);
+          }
+        }
+		
+        if (validateZipInput(zip)) {
+          calculateDistances(zip);
+        }
+      })
+			
+			$(function(){ // this function creates the dropdown options from the .js files.
+
+				//ListTotal = ListLowLiver.concat(ListKidLiver,ListAllLiver,ListLowKidney,ListKidKidney,ListAllKidney);
+
+				var options = "<option id=0 value= '' selected>Select A Transplant Center</option>";
+				for (var i = 0; i < ListTotal.length; i++) {
+					options += "<option id=" + parseInt(i+1) + " value=" + ListTotal[i].value + ">" + ListTotal[i].name+ " - " + ListTotal[i].add +"</option>";
+				}
+				
+				$("#tx1").html(options);
+				$("#tx2").html(options);
+				$("#tx3").html(options);
+			});
+			
+		</script>
     
   </body>
 </html>
