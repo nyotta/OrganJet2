@@ -224,7 +224,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
 							var cost = 0;
 							if (range == 0 && oList[j].dist_num <= 370) { cost = 8000;
 							} else if (range == 0 && oList[j].dist_num > 370 && oList[j].dist_num <= 2*370) { cost = 17000;
-							} else if (range == 0 && oList[j].dist_num > 2*370 && oList[j].dist_num <= 2.5*370) { cost = 22500;
+							} else if (range == 0 && oList[j].dist_num > 2*370 && oList[j].dist_num <= 3*370) { cost = 22500;
 							}
 							
 							if (cost > 0) {
@@ -243,7 +243,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
 									cost = 0;
 									if (oList[k].dist_num <= 370) { cost = 8000;
 									} else if (oList[k].dist_num > 370 && oList[k].dist_num <= 2*370) { cost = 17000;
-									} else if (oList[k].dist_num > 2*370 && oList[k].dist_num <= 2.5*370) { cost = 22500;
+									} else if (oList[k].dist_num > 2*370 && oList[k].dist_num <= 3*370) { cost = 22500;
 									}
 									if (cost > 0) {
 										$('#results-table-f tbody').append("<tr><td>" + parseInt(count_flying+1) + "</td><td><a href=" + oList[k].web + " target='_blank'>" + oList[k].name + "</a></td><td>" + oList[k].add + "</td><td>" + parseInt(oList[k].dist_num) + " mi</td><td>" + parseHours(oList[k].dist_num/370) + "</td></tr>"); //<td>$" + numberWithCommas(cost) + " </td></tr>");
@@ -368,7 +368,8 @@ Bobby Nyotta - 2013-2014 - OrganJet
 		function parseHours(totalHours) {
 			totalMin = totalHours * 60 + 12; // must add 12 minutes, per Sridhar's request.
 			hrs = Math.floor(totalMin / 60);
-			min = totalMin % 60;
+			min = (totalMin % 60);// + 12; 
+      
 			if (hrs == 0)  {
 				return parseInt(min) + " mins";
 			} else {
