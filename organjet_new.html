@@ -482,9 +482,9 @@ Bobby Nyotta - 2013-2014 - OrganJet
             <p></p>
 						Choose Up to 3 Transaction Centers <small>(optional)</small>:<br>
             <small>If transplant centers are not specified, all relevant transplant centers will be considered</small><br>
-						<select id="tx1" name="tx1" size=1></select><br>
-						<select id="tx2" name="tx2" size=1></select><br>
-						<select id="tx3" name="tx3" size=1></select><br>
+						<select id="tx1" name="tx1" size=1 style="width: 250px;"></select><br>
+						<select id="tx2" name="tx2" size=1 style="width: 250px;"></select><br>
+						<select id="tx3" name="tx3" size=1 style="width: 250px;"></select><br>
             <input id="execButton" name="buttonExecute" type="button" value="Find" class='btn' /><br>
           </form> 
         </p>
@@ -668,7 +668,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
 
 				ListTotal = ListLowLiver.concat(ListKidLiver,ListAllLiver,ListLowKidney,ListKidKidney,ListAllKidney);
 
-				var options = "<option id=0 value= '' selected>Select A Tx</option>";
+				var options = "<option id=0 value= '' selected>Select A Transplant Center</option>";
 				for (var i = 0; i < ListTotal.length; i++) {
 					options += "<option id=" + parseInt(i+1) + " value=" + ListTotal[i].value + ">" + ListTotal[i].name+ " - " + ListTotal[i].add +"</option>";
 				}
