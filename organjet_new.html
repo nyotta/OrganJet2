@@ -56,7 +56,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
       map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legendDiv);
     }
 
-    // returns closest 5 locations from each list and puts it into the table
+    // The bulk of the app -- most of the pre-processing is done here.
     function calculateDistances(z) {
       getCoordFromZip(z, function(){
           if ( zip_obj.sta != null ) { // if the zip code entered is legit
@@ -156,7 +156,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
   					description();
   					legend();
   					
-  					addCircle(2.5);
+  					addCircle(3);
   					addCircle(2);
   					addCircle(1);
           }
@@ -177,7 +177,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
 			}, callback);
 		}
 
-		// callback function after request to Google's Distance Matrix service is returned.
+		// callback function after request to Google's Distance Matrix service is returned... the mark-up is built in here.
     function callback(response, status) { 
       
       if (status != google.maps.DistanceMatrixStatus.OK) {
@@ -366,7 +366,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
 		
 		// takes hours and converts it into a string that reads "X hours Y minutes"
 		function parseHours(totalHours) {
-			totalMin = totalHours * 60;
+			totalMin = totalHours * 60 + 12; // must add 12 minutes, per Sridhar's request.
 			hrs = Math.floor(totalMin / 60);
 			min = totalMin % 60;
 			if (hrs == 0)  {
