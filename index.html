@@ -94,27 +94,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
   			
             } else { // if tx's were NOT selected from the drop-down
   					
-  						console.log(organ);
-  						console.log(type);
-  						if (organ == "Liver" && type == undefined) {
-  							List_NoDD = ListLowLiver.concat(ListKidLiver,ListAllLiver);
-  						} else if (organ == "Liver" && type == "_Low") {
-  							List_NoDD = ListLowLiver;
-  						} else if (organ == "Liver" && type == "_Reg") {
-  							List_NoDD = ListAllLiver;
-  						} else if (organ == "Liver" && type == "_Kid") {
-  							List_NoDD = ListKidLiver;
-  						} else if (organ == "Kidney" && type == undefined) {
-  							List_NoDD = ListLowKidney.concat(ListKidKidney,ListAllKidney);
-  						} else if (organ == "Kidney" && type == "_Low") {
-  							List_NoDD = ListLowKidney;
-  						} else if (organ == "Kidney" && type == "_Reg") {
-  							List_NoDD = ListAllKidney;
-  						} else if (organ == "Kidney" && type == "_Kid") {
-  							List_NoDD = ListKidKidney;
-  						}
               List_NoDD = ListTotal;
-  						console.log(List_NoDD);
   						
   						for (var j = 0; j < List_NoDD.length; j++) { // find haversine distance b/w each tx and zip
   							var tmp=new Object();
@@ -197,9 +177,11 @@ Bobby Nyotta - 2013-2014 - OrganJet
 						oList[j].dis_txt = results[j].distance.text;
 
 						if (selections.length > 0) { // if tx's were selected from the drop down
-						
-							$('#results-table tbody').append("<tr><td>" + parseInt(j+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td><td>" + parseHours(oList[j].dist_num/370) + "</td></tr>");
-							
+              if (oList[j].dist_num/370 <= 3) {
+                $('#results-table tbody').append("<tr><td>" + parseInt(j+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td><td>" + parseHours(oList[j].dist_num/370) + "</td></tr>");
+							} else {
+                $('#results-table tbody').append("<tr><td>" + parseInt(j+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td><td> N/A </td></tr>");
+              }
 							addMarker(oList[j], '_Low');
 							
 						} else if (selections.length == 0) { // if tx's were NOT selected from the drop down
@@ -223,7 +205,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
 							var cost = 0;
 							if (range == 0 && oList[j].dist_num <= 370) { cost = 8000;
 							} else if (range == 0 && oList[j].dist_num > 370 && oList[j].dist_num <= 2*370) { cost = 17000;
-							} else if (range == 0 && oList[j].dist_num > 2*370 && oList[j].dist_num <= 3*370) { cost = 22500;
+							} else if (range == 0 && oList[j].dist_num > 2*370 && oList[j].dist_num <= 2.5*370) { cost = 22500;
 							}
 							
 							if (cost > 0) {
@@ -242,7 +224,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
 									cost = 0;
 									if (oList[k].dist_num <= 370) { cost = 8000;
 									} else if (oList[k].dist_num > 370 && oList[k].dist_num <= 2*370) { cost = 17000;
-									} else if (oList[k].dist_num > 2*370 && oList[k].dist_num <= 3*370) { cost = 22500;
+									} else if (oList[k].dist_num > 2*370 && oList[k].dist_num <= 2.5*370) { cost = 22500;
 									}
 									if (cost > 0) {
 										$('#results-table-f tbody').append("<tr><td>" + parseInt(count_flying+1) + "</td><td><a href=" + oList[k].web + " target='_blank'>" + oList[k].name + "</a></td><td>" + oList[k].add + "</td><td>" + parseInt(oList[k].dist_num) + " mi</td><td>" + parseHours(oList[k].dist_num/370) + "</td></tr>"); //<td>$" + numberWithCommas(cost) + " </td></tr>");
@@ -383,11 +365,12 @@ Bobby Nyotta - 2013-2014 - OrganJet
       descrip.append("<p>Pin Colors Legend:</p>");
       descrip.append("<ul><li>Yellow Pin - Location of Your Zip Code</li><li>Green Pin - Locations of your chosen transplant centers</li></ul>");
       
-      descrip.append("<p>The concentric circles show areas that are approximately one, two and three hour flying times from your home ZIP code.</p>");
-      descrip.append("<p>The transplant center locations were obtained from <a href='http://www.srtr.org' target='_blank'>Scientific Registry of Transplant Recipients</a>.</p>");
+      descrip.append("<p>The concentric circles show areas that are approximately one, two, and three hour flying times from your home zip code.</p>");
+      descrip.append("<p>Flying times larger than 3 hours are not accessible via light/medium jets due to fuel requirements.</p>");
       descrip.append("<p>'Estimated Flying Time' is computed through a heuristic formula that uses latitude and longitude information and average flight speeds of a light jet. The map in this application is supported by Google Maps Javascript API V3, which has strict usage limitations.</p>"); 
       descrip.append("<p>The 'pick up' time for a private jet from an airport near your home is typically about three to four hours. Thus, the <i>total time</i> to reach your transplant center is the estimated flying time <i>plus</i> the pick up time <i>plus</i> the driving time from the drop off airport to the transplant center.</p>");
-      
+      descrip.append("<p>The transplant center locations were obtained from <a href='http://www.srtr.org' target='_blank'>Scientific Registry of Transplant Recipients</a>.</p>");
+
       var disclaim = $('#disclaimer');
       disclaim.append("OrganJet and GuardianWings do not provide medical advice. All information presented here is for educational/awareness purposes only. Please consult your physician before taking any action. Every effort has been made to furnish accurate and most up to date summarized data based on publicly available information.");
       
@@ -464,8 +447,11 @@ Bobby Nyotta - 2013-2014 - OrganJet
 						<input id="zip" name="zip" type="text" maxlength="5"/><br>
             
             <p></p>
-						Choose Up to 3 Transaction Centers:<br>
-            <small>If transplant centers are not specified, all relevant transplant centers will be considered</small><br>
+						Choose Up to 3 Transaction Centers<br>
+            <small> If no transplant center is selected, we provide:<br>
+            <ul><li>Facilities within 3 hours of driving</li>
+            <li>Facilities that are further the 3 hours of driving but closer than 2.5 hours of flying, up to a maximum of 25</li><ul>
+            </small>
 						<select id="tx1" name="tx1" size=1 style="width: 250px;"></select><br>
 						<select id="tx2" name="tx2" size=1 style="width: 250px;"></select><br>
 						<select id="tx3" name="tx3" size=1 style="width: 250px;"></select><br>
@@ -574,7 +560,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
 
 				var options = "<option id=0 value= '' selected>Select A Transplant Center</option>";
 				for (var i = 0; i < ListTotal.length; i++) {
-					options += "<option id=" + parseInt(i+1) + " value=" + ListTotal[i].value + ">" + ListTotal[i].name+ " - " + ListTotal[i].add +"</option>";
+					options += "<option id=" + parseInt(i+1) + " value=" + ListTotal[i].value + ">" + ListTotal[i].name+ " - " + ListTotal[i].add.substring(ListTotal[i].add.indexOf(",")+2) +"</option>";
 				}
 				
 				$("#tx1").html(options);
