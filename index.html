@@ -11,8 +11,9 @@ Bobby Nyotta - 2013-2014 - OrganJet
   
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8ndKa5KGrRbe6feO4v4M2dODOw8w5_Q0&sensor=false"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
-    <script src="retrieve-data-hardcoded.js"></script>
-    
+    <script src="retrieve-data-hardcoded-liver.js"></script>
+    <script src="retrieve-data-hardcoded-kidney.js"></script>
+		
     <!-- Conflict b/w Bootstrap and Google Maps Info window styles problem, so this fixes it! -->
     <style type="text/css">
       img[src*="gstatic.com/"], img[src*="googleapis.com/"] { max-width: none; }
@@ -26,10 +27,10 @@ Bobby Nyotta - 2013-2014 - OrganJet
         ,markersArray = []
         ,url_srt = 'http://maps.googleapis.com/maps/api/geocode/json?address='
         ,url_end = '&sensor=false'
-        ,destIconL = 'https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=T|12f404|000000'
-        ,destIconR = 'https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=R|63D1F4|000000'
-        ,destIconC = 'https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=C|FFAA00|000000'
-        ,originIcon = 'https://chart.googleapis.com/chart?chst=d_map_spin&chld=.75|0|FFFF00|11|_|O'
+        ,iconL = 'https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=L|12f404|000000'
+        ,iconR = 'https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=R|63D1F4|000000'
+        ,iconK = 'https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=C|FFAA00|000000'
+        ,iconO = 'https://chart.googleapis.com/chart?chst=d_map_spin&chld=.75|0|FFFF00|11|_|O'
         ,organ = ""
 				,type = ""
         ,legendDiv = document.createElement('DIV')
@@ -57,88 +58,87 @@ Bobby Nyotta - 2013-2014 - OrganJet
     // The bulk of the app -- most of the pre-processing is done here.
     function calculateDistances(z) {
       getCoordFromZip(z, function(){
-          if ( zip_obj.sta != null ) { // if the zip code entered is legit
-            deleteOverlays();
-            addMarker(zip_obj, 'o'); // add origin marker
+				if ( zip_obj.sta != null ) { // if the zip code entered is legit
+					deleteOverlays();
+					addMarker(zip_obj, 'o'); // add origin marker
 
-            if (selections.length > 0) { // if tx's were selected from the dropdown
+					if (selections.length > 0) { // if tx's were selected from the dropdown
 
-              for (var j = 0; j < selections.length; j = j+2) { // find haversine distance b/w each tx and zip
+						for (var j = 0; j < selections.length; j = j+2) { // find haversine distance b/w each tx and zip
 
-                var tmp_num = selections[j]-1;
-                var tmp_tex = selections[j+1];
+							var tmp_num = selections[j]-1;
+							var tmp_tex = selections[j+1];
 
-                var tmp=new Object();
-                tmp.name= ListTotal[tmp_num].name;
-                tmp.add = ListTotal[tmp_num].add;
-                tmp.lng = ListTotal[tmp_num].lng;
-                tmp.lat = ListTotal[tmp_num].lat;
-                tmp.web = ListTotal[tmp_num].web;
-  							tmp.val = ListTotal[tmp_num].value;
-  							tmp.dur_txt = 0;
-  							tmp.dis_txt = 0;
-                tmp.dist_num=haversine(zip_obj.lng,zip_obj.lat,ListTotal[tmp_num].lng,ListTotal[tmp_num].lat);
-  							
-                oList.push(tmp);
-  							
-  							selections_DD.push(ListTotal[tmp_num].add); // keep addresses of tx's in a seperate array for the Google Distance Matrix query.
-              }
-  						console.log(selections_DD);
-  						
-  						// create table header
-              $('#results-table').show();
-  						$('#results-table thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Actual Driving Distance</th><th class='d_time'>Actual Driving Time</th><th class='f_time'>Estimated Flying Time</th></tr>");
-  						
-  						// get driving distances for each of the selected tx's
-  						calculate_DD(zip_obj.name,selections_DD);
-  			
-            } else { // if tx's were NOT selected from the drop-down
-  					
-              List_NoDD = ListTotal;
-  						
-  						for (var j = 0; j < List_NoDD.length; j++) { // find haversine distance b/w each tx and zip
-  							var tmp=new Object();
-  							tmp.name= List_NoDD[j].name;
-  							tmp.add = List_NoDD[j].add;
-  							tmp.lng = List_NoDD[j].lng;
-  							tmp.lat = List_NoDD[j].lat;
-  							tmp.web = List_NoDD[j].web;
-  							tmp.val = List_NoDD[j].value;
-  							tmp.dur_txt = 0;
-  							tmp.dis_txt = 0;
-  							tmp.dist_num=haversine(zip_obj.lng,zip_obj.lat,List_NoDD[j].lng,List_NoDD[j].lat);
-  							oList.push(tmp);
-  						}
-  						
-  						// sort list in ascending order based on haversine distance.
-  						oList.sort(function(a,b) { return parseFloat(a.dist_num) - parseFloat(b.dist_num) } );
-  						console.log(oList);
-  						for (var j = 0 ; j < Math.min(25,List_NoDD.length) ; j++) {
-  							selections_DD.push(oList[j].add);
-  						}
-  						
-  						// create table headers
-  						$('#driving-header').append("Transplant Centers Accessible by Car");
-              $('#results-table-d').show();
-  						$('#results-table-d thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Actual Driving Distance</th><th class='d_time'>Actual Driving Time</th></tr>");
-  						
-  						$('#flying-header').append("Transplant Centers Accessible by Private Jet");
-              $('#results-table-f').show();
-  						$('#results-table-f thead').append("<tr><th class='num'>No.</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Estimated Flying Distance</th><th class='d_time'>Estimated Flying Time</th></tr>"); //<th class='d_cost'>Estimated Flying Cost</th></tr>");
-  						
-  						// get driving distances for each of the selected tx's
-  						calculate_DD(zip_obj.name,selections_DD);
-            }
-  					
-  					setTimeout(function () { map.fitBounds(bounds) } ,1000); //zoom based on the LatLngBounds object
-  					
-  					description();
-  					legend();
-  					
-  					addCircle(3);
-  					addCircle(2);
-  					addCircle(1);
-          }
+							var tmp=new Object();
+							tmp.name= ListTotal[tmp_num].name;
+							tmp.add = ListTotal[tmp_num].add;
+							tmp.lng = ListTotal[tmp_num].lng;
+							tmp.lat = ListTotal[tmp_num].lat;
+							tmp.web = ListTotal[tmp_num].web;
+							tmp.val = ListTotal[tmp_num].value;
+							tmp.dur_txt = 0;
+							tmp.dis_txt = 0;
+							tmp.dist_num=haversine(zip_obj.lng,zip_obj.lat,ListTotal[tmp_num].lng,ListTotal[tmp_num].lat);
+							
+							oList.push(tmp);
+							
+							selections_DD.push(ListTotal[tmp_num].add); // keep addresses of tx's in a seperate array for the Google Distance Matrix query.
+						}
+						
+						// create table header
+						$('#results-table').show();
+						$('#results-table thead').append("<tr><th class='num'>No.</th><th class='type'>Type</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Actual Driving Distance</th><th class='d_time'>Actual Driving Time</th><th class='f_time'>Estimated Flying Time</th></tr>");
+						
+						// get driving distances for each of the selected tx's
+						calculate_DD(zip_obj.name,selections_DD);
+			
+					} else { // if tx's were NOT selected from the drop-down
+					
+						List_NoDD = ListTotal;
+						
+						for (var j = 0; j < List_NoDD.length; j++) { // find haversine distance b/w each tx and zip
+							var tmp=new Object();
+							tmp.name= List_NoDD[j].name;
+							tmp.add = List_NoDD[j].add;
+							tmp.lng = List_NoDD[j].lng;
+							tmp.lat = List_NoDD[j].lat;
+							tmp.web = List_NoDD[j].web;
+							tmp.val = List_NoDD[j].value;
+							tmp.dur_txt = 0;
+							tmp.dis_txt = 0;
+							tmp.dist_num=haversine(zip_obj.lng,zip_obj.lat,List_NoDD[j].lng,List_NoDD[j].lat);
+							oList.push(tmp);
+						}
+						
+						// sort list in ascending order based on haversine distance.
+						oList.sort(function(a,b) { return parseFloat(a.dist_num) - parseFloat(b.dist_num) } );
+
+						for (var j = 0 ; j < Math.min(25,List_NoDD.length) ; j++) {
+							selections_DD.push(oList[j].add);
+						}
+						
+						// create table headers
+						$('#driving-header').append("Transplant Centers Accessible by Car");
+						$('#results-table-d').show();
+						$('#results-table-d thead').append("<tr><th class='num'>No.</th><th class='type'>Type</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Actual Driving Distance</th><th class='d_time'>Actual Driving Time</th></tr>");
+						
+						$('#flying-header').append("Transplant Centers Accessible by Private Jet");
+						$('#results-table-f').show();
+						$('#results-table-f thead').append("<tr><th class='num'>No.</th><th class='type'>Type</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Estimated Flying Distance</th><th class='d_time'>Estimated Flying Time</th></tr>"); //<th class='d_cost'>Estimated Flying Cost</th></tr>");
+						
+						// get driving distances for each of the selected tx's
+						calculate_DD(zip_obj.name,selections_DD);
+					}
+					
+					setTimeout(function () { map.fitBounds(bounds) } ,1000); //zoom based on the LatLngBounds object
+					
+					description();
+					legend();
+					
+					addCircle(3);
+					addCircle(2);
+					addCircle(1);
+				}
       });
     }
     
@@ -162,7 +162,6 @@ Bobby Nyotta - 2013-2014 - OrganJet
       if (status != google.maps.DistanceMatrixStatus.OK) {
         alert('Error was: ' + status);
       } else {
-				
         for (var i = 0 ; i < response.originAddresses.length ; i++) {
 				
           var results = response.rows[i].elements;
@@ -170,19 +169,25 @@ Bobby Nyotta - 2013-2014 - OrganJet
           var count_driving = 0;
 
 					for (var j = 0 ; j < results.length ; j++) {
-						//console.log(j);
-						//console.log(results[j].duration);
 						
 						oList[j].dur_txt = results[j].duration.text;
 						oList[j].dis_txt = results[j].distance.text;
-
+						
+						if (oList[j].val.slice(-4)==="_Reg") {
+							type="Regular";
+						} else if(oList[j].val.slice(-4)==="_Low") {
+							type="Low-Wait";
+						} else if(oList[j].val.slice(-4)==="_Kid") {
+							type="Childrens";
+						}
+						
 						if (selections.length > 0) { // if tx's were selected from the drop down
-              if (oList[j].dist_num/370 <= 3) {
-                $('#results-table tbody').append("<tr><td>" + parseInt(j+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td><td>" + parseHours(oList[j].dist_num/370) + "</td></tr>");
+              if ((12/60 + oList[j].dist_num/370) <= 3) {
+                $('#results-table tbody').append("<tr><td>" + parseInt(j+1) + "</td><td>" + type + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td><td>" + parseHours(12/60 + oList[j].dist_num/370) + "</td></tr>");
 							} else {
-                $('#results-table tbody').append("<tr><td>" + parseInt(j+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td><td> N/A </td></tr>");
+                $('#results-table tbody').append("<tr><td>" + parseInt(j+1) + "</td><td>" + type + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td><td> N/A </td></tr>");
               }
-							addMarker(oList[j], '_Low');
+							addMarker(oList[j], oList[j].val.slice(-4));
 							
 						} else if (selections.length == 0) { // if tx's were NOT selected from the drop down
 							
@@ -194,26 +199,25 @@ Bobby Nyotta - 2013-2014 - OrganJet
 							}
 							
 							if (range > 0) {
-								$('#results-table-d tbody').append("<tr><td>" + parseInt(count_driving+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td></tr>");
+								$('#results-table-d tbody').append("<tr><td>" + parseInt(count_driving+1) + "</td><td>" + type + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + oList[j].dis_txt + "</td><td>" + oList[j].dur_txt + "</td></tr>");
 								
                 count_driving++;
-                
-								addMarker(oList[j], '_Low');
+								addMarker(oList[j], oList[j].val.slice(-4));
 							}
 							
 							// then see if tx is >3 hrs away (driving) and <= 2.5*370 miles flying, add to table and marker to map
 							var cost = 0;
-							if (range == 0 && oList[j].dist_num <= 370) { cost = 8000;
-							} else if (range == 0 && oList[j].dist_num > 370 && oList[j].dist_num <= 2*370) { cost = 17000;
-							} else if (range == 0 && oList[j].dist_num > 2*370 && oList[j].dist_num <= 2.5*370) { cost = 22500;
+							
+							if (range == 0 && (12/60 + oList[j].dist_num/370) <= 1) { cost = 8000;
+							} else if (range == 0 && (12/60 + oList[j].dist_num/370) > 1 && (12/60 + oList[j].dist_num/370) <= 2) { cost = 17000;
+							} else if (range == 0 && (12/60 + oList[j].dist_num/370) > 2 && (12/60 + oList[j].dist_num/370) <= 3) { cost = 22500;
 							}
 							
 							if (cost > 0) {
-								$('#results-table-f tbody').append("<tr><td>" + parseInt(count_flying+1) + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + parseInt(oList[j].dist_num) + " mi</td><td>" + parseHours(oList[j].dist_num/370) + " </td></tr>"); //<td>$" + numberWithCommas(cost) + " </td></tr>");
+								$('#results-table-f tbody').append("<tr><td>" + parseInt(count_flying+1) + "</td><td>" + type + "</td><td><a href=" + oList[j].web + " target='_blank'>" + oList[j].name + "</a></td><td>" + oList[j].add + "</td><td>" + parseInt(oList[j].dist_num) + " mi</td><td>" + parseHours(12/60 + oList[j].dist_num/370) + " </td></tr>"); //<td>$" + numberWithCommas(cost) + " </td></tr>");
 								
 								count_flying++;
-								
-								addMarker(oList[j], '_Low');
+								addMarker(oList[j], oList[j].val.slice(-4));
 							}
 							
 							// finally, at the end of the google distance locations, we look at other locations if we haven't hit 25 in the flying table. we go through the rest of the relevant tx's to see if they are within private jet distance. we stop when we've exhausted the list OR hit 25 tx's.
@@ -221,17 +225,25 @@ Bobby Nyotta - 2013-2014 - OrganJet
 								var k = j;
 								while (k < oList.length && count_flying < 25) {
 									k++;
+									
+									if (oList[k].val.slice(-4)==="_Reg") {
+										type="Regular";
+									} else if(oList[k].val.slice(-4)==="_Low") {
+										type="Low-Wait";
+									} else if(oList[k].val.slice(-4)==="_Kid") {
+										type="Childrens";
+									}
+									
 									cost = 0;
-									if (oList[k].dist_num <= 370) { cost = 8000;
-									} else if (oList[k].dist_num > 370 && oList[k].dist_num <= 2*370) { cost = 17000;
-									} else if (oList[k].dist_num > 2*370 && oList[k].dist_num <= 2.5*370) { cost = 22500;
+									if ((12/60 + oList[j].dist_num/370) <= 1) { cost = 8000;
+									} else if ((12/60 + oList[j].dist_num/370) > 1 && (12/60 + oList[j].dist_num/370) <= 2) { cost = 17000;
+									} else if ((12/60 + oList[j].dist_num/370) > 2 && (12/60 + oList[j].dist_num/370) <= 3) { cost = 22500;
 									}
 									if (cost > 0) {
-										$('#results-table-f tbody').append("<tr><td>" + parseInt(count_flying+1) + "</td><td><a href=" + oList[k].web + " target='_blank'>" + oList[k].name + "</a></td><td>" + oList[k].add + "</td><td>" + parseInt(oList[k].dist_num) + " mi</td><td>" + parseHours(oList[k].dist_num/370) + "</td></tr>"); //<td>$" + numberWithCommas(cost) + " </td></tr>");
+										$('#results-table-f tbody').append("<tr><td>" + parseInt(count_flying+1) + "</td><td>" + type + "</td><td><a href=" + oList[k].web + " target='_blank'>" + oList[k].name + "</a></td><td>" + oList[k].add + "</td><td>" + parseInt(oList[k].dist_num) + " mi</td><td>" + parseHours(12/60 + oList[k].dist_num/370) + "</td></tr>"); //<td>$" + numberWithCommas(cost) + " </td></tr>");
 										
 										count_flying++;
-										//console.log(count_flying);
-										addMarker(oList[k], '_Low');
+										addMarker(oList[k], oList[k].val.slice(-4));
 									}
 								}
 							}
@@ -248,15 +260,17 @@ Bobby Nyotta - 2013-2014 - OrganJet
 		
     // adds markers to the map
     function addMarker(obj, isDestination) {
+      console.log(obj);
+      console.log(isDestination);
       var icon;
       if (isDestination == '_Low') {        // low-wait
-        icon = destIconL;
+        icon = iconL;
       } else if (isDestination == '_Reg') { // regular
-        icon = destIconR;
+        icon = iconR;
       } else if (isDestination == '_Kid') { // children's center
-        icon = destIconC;
-      } else {                           // zip code
-        icon = originIcon;
+        icon = iconK;
+      } else {															// zip code
+        icon = iconO;
       }
       // add markers using lat/lng
       var marker = new google.maps.Marker({
@@ -285,7 +299,6 @@ Bobby Nyotta - 2013-2014 - OrganJet
 			if (Math.ceil(hours) == 1) {color = '#00FF00'}
 			else if (Math.ceil(hours) == 2) {color = '#FFFF00'}
 			else if (Math.ceil(hours) == 3) {color = '#FF0000'}
-			
       var circle = new google.maps.Circle({
 				strokeColor: color,
 				strokeOpacity: 0.15,
@@ -347,9 +360,9 @@ Bobby Nyotta - 2013-2014 - OrganJet
 		
 		// takes hours and converts it into a string that reads "X hours Y minutes"
 		function parseHours(totalHours) {
-			totalMin = totalHours * 60 + 12; // must add 12 minutes, per Sridhar's request.
+			totalMin = totalHours * 60;
 			hrs = Math.floor(totalMin / 60);
-			min = (totalMin % 60);// + 12; 
+			min = (totalMin % 60);
       
 			if (hrs == 0)  {
 				return parseInt(min) + " mins";
@@ -363,13 +376,14 @@ Bobby Nyotta - 2013-2014 - OrganJet
       var descrip = $('#description');
       
       descrip.append("<p>Pin Colors Legend:</p>");
-      descrip.append("<ul><li>Yellow Pin - Location of Your Zip Code</li><li>Green Pin - Locations of your chosen transplant centers</li></ul>");
+      descrip.append("<ul><li>Yellow Pin - Location of Your Zip Code</li><li>Green Pin - Locations of the closest low wait time transplant centers</li><li>Blue Pin - Locations of the closest regular transplant centers</li><li>Orange Pin - Locations of the closest children's transplant centers</li></ul>");
       
       descrip.append("<p>The concentric circles show areas that are approximately one, two, and three hour flying times from your home zip code.</p>");
       descrip.append("<p>Flying times larger than 3 hours are not accessible via light/medium jets due to fuel requirements.</p>");
       descrip.append("<p>'Estimated Flying Time' is computed through a heuristic formula that uses latitude and longitude information and average flight speeds of a light jet. The map in this application is supported by Google Maps Javascript API V3, which has strict usage limitations.</p>"); 
       descrip.append("<p>The 'pick up' time for a private jet from an airport near your home is typically about three to four hours. Thus, the <i>total time</i> to reach your transplant center is the estimated flying time <i>plus</i> the pick up time <i>plus</i> the driving time from the drop off airport to the transplant center.</p>");
       descrip.append("<p>The transplant center locations were obtained from <a href='http://www.srtr.org' target='_blank'>Scientific Registry of Transplant Recipients</a>.</p>");
+      descrip.append("<p>VA hospitals are not included in our lists. Information about VA centers can be found <a href='http://www.va.gov/TRANSPLANT/' target='_blank'>here</a>.</p>");
 
       var disclaim = $('#disclaimer');
       disclaim.append("OrganJet and GuardianWings do not provide medical advice. All information presented here is for educational/awareness purposes only. Please consult your physician before taking any action. Every effort has been made to furnish accurate and most up to date summarized data based on publicly available information.");
@@ -392,10 +406,10 @@ Bobby Nyotta - 2013-2014 - OrganJet
       
       // Add the text
       legendDiv.innerHTML = '<p style="text-align:center;line-height:50%"><b>LEGEND</b></p>' +
-        '<p><img src="' + originIcon + '" />' + '  Your Location</p>' + 
-        '<p><img src="' + destIconL + '" />' + '  Transplant Center</p>'; 
-        // + '<p><img src="' + destIconR + '" />' + '  Regular Center</p>' 
-        // + '<p><img src="' + destIconC + '" />' + '  Childrens Center</p>';
+        '<p><img src="' + iconO + '" />' + '  Your Location</p>'
+        + '<p><img src="' + iconL + '" />' + '  Low-Wait Center</p>'
+        + '<p><img src="' + iconR + '" />' + '  Regular Center</p>' 
+        + '<p><img src="' + iconK + '" />' + '  Children\'s Center</p>';
     }
 
     // Returns the longitude and latitude from a zip code
@@ -434,30 +448,34 @@ Bobby Nyotta - 2013-2014 - OrganJet
   
   <body>
     <h3 class="offset2">Driving and Flying Times to Transplant Centers</h3>
-    <div class='row map-container'>
+    <div class='row map-container'> <!-- contains map container -->
       <div class="span10 offset1" id="map-canvas">
 			</div>
     </div>
-    <div class='row'> <!-- contains radio buttons, drop downs, buttons, etc-->
+    
+		<div class='row'> <!-- contains radio buttons, drop downs, buttons, etc-->
       <div class="span10 offset2"> 
-        <p>
-          <form id="zipForm" name="zipForm">
-						<p></p>
-            Enter Your Zip Code: 
-						<input id="zip" name="zip" type="text" maxlength="5"/><br>
-            
-            <p></p>
-						Choose Up to 3 Transaction Centers<br>
-            <small> If no transplant center is selected, we provide:<br>
-            <ul><li>Facilities within 3 hours of driving</li>
-            <li>Facilities that are further the 3 hours of driving but closer than 2.5 hours of flying, up to a maximum of 25</li><ul>
-            </small>
-						<select id="tx1" name="tx1" size=1 style="width: 250px;"></select><br>
-						<select id="tx2" name="tx2" size=1 style="width: 250px;"></select><br>
-						<select id="tx3" name="tx3" size=1 style="width: 250px;"></select><br>
-            <input id="execButton" name="buttonExecute" type="button" value="Find" class='btn' /><br>
-          </form> 
-        </p>
+				<form id="zipForm" name="zipForm">
+					<p></p>
+					Choose Organ: 
+					<input id="organs_k_radio" name="organs" type="radio" value="Kidney" /> Kidney
+					<input id="organs_l_radio" name="organs" type="radio" value="Liver" /> Liver
+					
+					<p></p>
+					Enter Your Zip Code: 
+					<input id="zip" name="zip" type="text" maxlength="5"/><br>
+					
+					<p></p>
+					Choose Up to 3 Transaction Centers<br>
+					<small> If no transplant center is selected, we provide:
+					<ul><li>Centers that are within 3 hours of driving (up to a maximum of 25)</li>
+					<li>Centers that are further the 3 hours of driving but closer than 3 hours of flying (up to a maximum of 25)</li></ul></small>
+					
+					<select id="tx1" name="tx1" size=1 style="width: 250px;"><option id=0 value= '' selected>Select A Transplant Center</option></select><br>
+					<select id="tx2" name="tx2" size=1 style="width: 250px;"><option id=0 value= '' selected>Select A Transplant Center</option></select><br>
+					<select id="tx3" name="tx3" size=1 style="width: 250px;"><option id=0 value= '' selected>Select A Transplant Center</option></select><br>
+					<input id="execButton" name="buttonExecute" type="button" value="Find" class='btn' /><br>
+				</form> 
       </div>
     </div>
     
@@ -486,7 +504,8 @@ Bobby Nyotta - 2013-2014 - OrganJet
       </div>
 			
     </div>
-    <div class='row'>
+		
+    <div class='row'> <!-- contains post-table text div's-->  
       <div id="post-table-text" class="hide span10 offset1 well">
         <p id="description"></p>
         <p id="disclaimer"></p>
@@ -497,10 +516,19 @@ Bobby Nyotta - 2013-2014 - OrganJet
       
       function validateZipInput(z) { // data validation for zip codes
         if (z.length < 5) {
-          alert("Zip Code Must Be 5 Digits");
+          alert("Zip Code Must Be 5 Digits.");
           return false;
         } else if (z.match(/^[0-9]+$/) == null) {
-          alert("Zip Code Can Only Contain Digits");
+          alert("Zip Code Can Only Contain Digits.");
+          return false;
+        } else {
+          return true;
+        }
+      }
+			
+      function validateOrgans(organ) { // validation ensuring an organ was selected in the radio buttons
+        if (organ == null) {
+          alert("Please Select an Organ.");
           return false;
         } else {
           return true;
@@ -511,7 +539,6 @@ Bobby Nyotta - 2013-2014 - OrganJet
         selections = new Array();
 				selections_DD = new Array();
         organ = $('input[name=organs]:checked','#zipForm').val();
-				type = $('input[name=tx]:checked','#zipForm').val();
         var zip = $('#zip').val();
         
         for (var i = 1; i < 4; i++) { //retrieves the option selected from each of the dropdown menu's
@@ -525,7 +552,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
           }
         }
 		
-        if (validateZipInput(zip)) {
+        if (validateZipInput(zip) && validateOrgans(organ)) {
           calculateDistances(zip);
         }
         return false;
@@ -535,7 +562,6 @@ Bobby Nyotta - 2013-2014 - OrganJet
         selections = new Array();
 				selections_DD = new Array();
         organ = $('input[name=organs]:checked','#zipForm').val();
-				type = $('input[name=tx]:checked','#zipForm').val();
         var zip = $('#zip').val();
         
         for (var i = 1; i < 4; i++) { //retrieves the option selected from each of the dropdown menu's
@@ -549,24 +575,45 @@ Bobby Nyotta - 2013-2014 - OrganJet
           }
         }
 		
-        if (validateZipInput(zip)) {
+        if (validateZipInput(zip) && validateOrgans(organ)) {
           calculateDistances(zip);
         }
       })
 			
-			$(function(){ // this function creates the dropdown options from the .js files.
-
-				//ListTotal = ListLowLiver.concat(ListKidLiver,ListAllLiver,ListLowKidney,ListKidKidney,ListAllKidney);
-
-				var options = "<option id=0 value= '' selected>Select A Transplant Center</option>";
-				for (var i = 0; i < ListTotal.length; i++) {
-					options += "<option id=" + parseInt(i+1) + " value=" + ListTotal[i].value + ">" + ListTotal[i].name+ " - " + ListTotal[i].add.substring(ListTotal[i].add.indexOf(",")+2) +"</option>";
-				}
+			var O= "", ListTotal=[];
+			
+			$(function(){ // this function is executed any time a radio button is clicked
 				
-				$("#tx1").html(options);
-				$("#tx2").html(options);
-				$("#tx3").html(options);
+				$('[name="organs"]').on("click",function(){ // this is run when an organ radio button is clicked
+					O =  $(this).val();
+
+					$("#tx1").html(""); // clears drop down content
+					$("#tx2").html("");
+					$("#tx3").html("");
+					
+					// populates drop down content
+					if (O == 'Kidney') { 
+						ListTotal = ListLowKidney.concat(ListKidKidney,ListAllKidney);
+					} else if (O == 'Liver') {
+						ListTotal = ListLowLiver.concat(ListKidLiver,ListAllLiver);
+					}
+					
+					var options = "<option id=0 value= '' selected>Select A Transplant Center</option>";
+					for (var i = 0; i < ListTotal.length; i++) {
+						options += "<option id=" + parseInt(i+1) + " value=" + ListTotal[i].value + ">" + ListTotal[i].name+ " - " + ListTotal[i].add.substring(ListTotal[i].add.indexOf(",")+2) +"</option>";
+					}
+					$("#tx1").html(options);
+					$("#tx2").html(options);
+					$("#tx3").html(options);
+					
+				});
 			});
+			
+			// unchecks the radio button when the page is refreshed
+			var inp = document.getElementsByTagName('input');
+			for (var i = inp.length-1; i>=0; i--) {
+				if ('radio'===inp[i].type) inp[i].checked = false;
+			}
 			
 		</script>
     

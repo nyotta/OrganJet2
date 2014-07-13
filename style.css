@@ -4,7 +4,7 @@ html, body {
 .scrollable{
    overflow: auto;
    /*overflow-y: scroll;
-   width: 70px; /* adjust this width depending to amount of text to display */
+width: 70px; /* adjust this width depending to amount of text to display */
    height: 60px; /* adjust height depending on number of options to display */
    border: 1px silver solid;
  }
@@ -27,31 +27,38 @@ html, body {
   font-size: 85%;
 }
 #results-table th {
-  background-color:#0099FF; 
+  background-color:#0099FF;
   font:bold;
   color:#FFFFFF;
   vertical-align: top;
   text-align: center;
 }
 .num {
-  width: 20px;
+  width: 5%;
+}
+.type {
+  width: 7.5%;
 }
 .loc {
-  width: 500px;
+  width: 30%;
 }
 .address {
-  width: 300px;
+  width: 30%;
 }
-.flying {
-  width: 300px;
+.d_dist {
+  width: 10%;
 }
-.driving {
-  width: 300px;
+.d_time {
+  width: 10%;
+}
+.f_time {
+  width: 12.5%;
 }
 
+
 #results-no-dropdown p {
-	font:bold;
-	font-size: 150%;
+font:bold;
+font-size: 150%;
 }
 
 #results-no-dropdown td {
@@ -61,7 +68,7 @@ html, body {
 }
 
 #results-no-dropdown th{
-  background-color:#0099FF; 
+  background-color:#0099FF;
   font:bold;
   color:#FFFFFF;
   vertical-align: top;
@@ -70,11 +77,14 @@ html, body {
 .num {
   width: 5%;
 }
+.type {
+  width: 7.5%;
+}
 .loc {
-  width: 35%;
+  width: 30.5%;
 }
 .address {
-  width: 35%;
+  width: 30.5%;
 }
 .d_dist {
   width: 12.5%;
