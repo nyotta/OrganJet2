@@ -87,7 +87,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
 						
 						// create table header
 						$('#results-table').show();
-						$('#results-table thead').append("<tr><th class='num'>No.</th><th class='type'>Type</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Actual Driving Distance</th><th class='d_time'>Actual Driving Time</th><th class='f_time'>Estimated Flying Time</th></tr>");
+						$('#results-table thead').append("<tr><th class='num'>No.</th><th class='type'>Type</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Driving Distance</th><th class='d_time'>Driving Time</th><th class='f_time'>Estimated Flying Time</th></tr>");
 						
 						// get driving distances for each of the selected tx's
 						calculate_DD(zip_obj.name,selections_DD);
@@ -120,7 +120,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
 						// create table headers
 						$('#driving-header').append("Transplant Centers Accessible by Car");
 						$('#results-table-d').show();
-						$('#results-table-d thead').append("<tr><th class='num'>No.</th><th class='type'>Type</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Actual Driving Distance</th><th class='d_time'>Actual Driving Time</th></tr>");
+						$('#results-table-d thead').append("<tr><th class='num'>No.</th><th class='type'>Type</th><th class='loc'>Transplant Center</th><th class='address'>Address</th><th class='d_dist'>Driving Distance</th><th class='d_time'>Driving Time</th></tr>");
 						
 						$('#flying-header').append("Transplant Centers Accessible by Private Jet");
 						$('#results-table-f').show();
@@ -380,7 +380,7 @@ Bobby Nyotta - 2013-2014 - OrganJet
       
       descrip.append("<p>The concentric circles show areas that are approximately one, two, and three hour flying times from your home zip code.</p>");
       descrip.append("<p>Flying times larger than 3 hours are not accessible via light/medium jets due to fuel requirements.</p>");
-      descrip.append("<p>'Estimated Flying Time' is computed through a heuristic formula that uses latitude and longitude information and average flight speeds of a light jet. The map in this application is supported by Google Maps Javascript API V3, which has strict usage limitations.</p>"); 
+      descrip.append("<p>'Estimated Flying Time' is computed through a heuristic formula that uses latitude and longitude information and average flight speeds of a light jet. The map in this application is supported by Google Maps Javascript API V3, which has strict usage limitations. Actual flying time depends on several factors such as prevailing winds, specific aircraft type, weather and number of passengers.</p>"); 
       descrip.append("<p>The 'pick up' time for a private jet from an airport near your home is typically about three to four hours. Thus, the <i>total time</i> to reach your transplant center is the estimated flying time <i>plus</i> the pick up time <i>plus</i> the driving time from the drop off airport to the transplant center.</p>");
       descrip.append("<p>The transplant center locations were obtained from <a href='http://www.srtr.org' target='_blank'>Scientific Registry of Transplant Recipients</a>.</p>");
       descrip.append("<p>VA hospitals are not included in our lists. Information about VA centers can be found <a href='http://www.va.gov/TRANSPLANT/' target='_blank'>here</a>.</p>");
@@ -465,16 +465,15 @@ Bobby Nyotta - 2013-2014 - OrganJet
 					Enter Your Zip Code: 
 					<input id="zip" name="zip" type="text" maxlength="5"/><br>
 					
-					<p></p>
-					Choose Up to 3 Transaction Centers<br>
-					<small> If no transplant center is selected, we provide:
-					<ul><li>Centers that are within 3 hours of driving (up to a maximum of 25)</li>
-					<li>Centers that are further the 3 hours of driving but closer than 3 hours of flying (up to a maximum of 25)</li></ul></small>
+					<p>Choose Up to 3 Transaction Centers</p>
 					
 					<select id="tx1" name="tx1" size=1 style="width: 250px;"><option id=0 value= '' selected>Select A Transplant Center</option></select><br>
 					<select id="tx2" name="tx2" size=1 style="width: 250px;"><option id=0 value= '' selected>Select A Transplant Center</option></select><br>
 					<select id="tx3" name="tx3" size=1 style="width: 250px;"><option id=0 value= '' selected>Select A Transplant Center</option></select><br>
 					<input id="execButton" name="buttonExecute" type="button" value="Find" class='btn' /><br>
+					<small> If no transplant center is selected, we provide:
+					<ul><li>Centers that are within 3 hours of driving (up to a maximum of 25)</li>
+					<li>Centers that are further than 3 hours of driving (or beyond the closest 25 that are within driving distance) but less than 3 hours of flying (up to a maximum of 25)</li></ul></small>
 				</form> 
       </div>
     </div>
@@ -593,9 +592,9 @@ Bobby Nyotta - 2013-2014 - OrganJet
 					
 					// populates drop down content
 					if (O == 'Kidney') { 
-						ListTotal = ListLowKidney.concat(ListKidKidney,ListAllKidney);
+						ListTotal = ListKidney;
 					} else if (O == 'Liver') {
-						ListTotal = ListLowLiver.concat(ListKidLiver,ListAllLiver);
+						ListTotal = ListLiver;
 					}
 					
 					var options = "<option id=0 value= '' selected>Select A Transplant Center</option>";
